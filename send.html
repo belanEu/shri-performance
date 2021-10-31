@@ -3,6 +3,12 @@
 <head>
 	<title>Send metrics exampple</title>
 	<style type="text/css">
+		body {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+		}
+
 		.square {
 			width: 100px;
 			height: 100px;
@@ -19,22 +25,81 @@
 		div.black {
 			background-color: black;
 		}
+
+		img.sorry {
+			height: 600px;
+			transition: height 10s;
+			cursor: pointer;
+		}
+
+		.hide {
+			height: 0 !important;
+		}
 	</style>
 </head>
 <body>
 	<div class="square"></div>
 	<button class="load">Load</button>
 	<div class="results"></div>
+	<div style="margin-top: 20px; text-align: center;">
+		<img src="assets/test1.jpg" class="sorry" alt="image" title="Press me!" />
+		<img src="assets/test1.jpg" class="sorry" alt="image" title="Press me!" />
+		<img src="assets/test1.jpg" class="sorry" alt="image" title="Press me!" />
+		<img src="assets/test1.jpg" class="sorry" alt="image" title="Press me!" />
+	</div>
 	<script src="send.js"></script>
 	<script>
-
+		const touchOS = [
+			/Android/i,
+			/webOS/i,
+			/iPhone/i,
+			/iPad/i,
+			/iPod/i,
+			/BlackBerry/i,
+			/Windows Phone/i
+		];
+		const userAgent = navigator.userAgent;
+		const isTouch = touchOS.some(item => userAgent.match(item));
+		
 		let counter = new Counter();
-
-		counter.init('D8F28E50-3339-11EC-9EDF-9F93090795B1', String(Math.random()).substr(2, 12), 'send test');
+		counter.init('7CC55EF6-581A-4486-A321-DB1AEE7ABB1F', String(Math.random()).substr(2, 12), 'send test');
 		counter.setAdditionalParams({
 			env: 'production',
-			platform: 'touch'
+			// platform: isTouch ? 'touch' : 'desktop'
+			platform: Math.random() >= 0.5 ? 'touch' : 'desktop'
 		});
+
+		// отправка времени из встроенного api
+		const perfObserverNavigation = new PerformanceObserver((entryList) => {
+			counter.send('dom-complete', Math.ceil(entryList.getEntries()[0].domComplete));
+			counter.send('dom-interactive', Math.ceil(entryList.getEntries()[0].domInteractive));
+		});
+		perfObserverNavigation.observe({entryTypes: ["navigation"]});
+
+		const perfObserverPaint = new PerformanceObserver((entryList) => {
+			counter.send('first-paint', Math.ceil(entryList.getEntries()[0].startTime));
+		});
+		perfObserverPaint.observe({entryTypes: ["paint"]});
+
+		let hideImage = function (e) {
+			e.target.classList.add('hide');
+		};
+
+		document.querySelectorAll('.sorry').forEach(element => {
+			element.onclick = function(e) {
+				let timeStart = Date.now();
+
+				setTimeout(() => {
+					hideImage(e);
+					requestAnimationFrame(function() {
+						counter.send('hide-image', Date.now() - timeStart);
+					});
+				}, Math.random() * 1000);
+			}
+		});
+
+
+
 
 		counter.send('connect', performance.timing.connectEnd - performance.timing.connectStart);
 		counter.send('ttfb', performance.timing.responseEnd - performance.timing.requestStart);

@@ -120,7 +120,7 @@ function addMetricByPeriod(data, page, name, startDate, endDate) {
 								&&
 								item.date >= startDate && item.date <= endDate
 					)
-					.map(item => { return {date: item.date, value: item.value}}).sort((a, b) => a.date - b.date);
+					.map(item => { return {date: item.date, value: item.value}}).sort((a, b) => new Date(a.date) - new Date(b.date));
 
 	let groupedData = groupBy('date', 'value', metricData);
 	
@@ -223,7 +223,7 @@ fetch('https://shri.yandex/hw/stat/data?counterId=7CC55EF6-581A-4486-A321-DB1AEE
 		let data = prepareData(result);
 
 		calcMetricsByDate(data, 'send test', '2021-10-31');
-		showMetricByPeriod(data, 'send test', 'load', '2021-10-29', '2021-10-31');
+		showMetricByPeriod(data, 'send test', 'load', '2021-10-29', '2021-11-07');
 		
 		compareMetric(data, 'send test', 'load', '2021-10-31');
 		compareMetric(data, 'send test', 'generate', '2021-10-31');
